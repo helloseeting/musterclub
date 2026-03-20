@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏰 Muster.club
 
-## Getting Started
+**Guild-Based Career Gig Platform**
+*Your next quest awaits.*
 
-First, run the development server:
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| Framework | Next.js 15 (App Router, TypeScript) |
+| Styling | Tailwind CSS + Radix UI + Framer Motion |
+| Auth | Firebase Authentication (Email + Google) |
+| Database | Cloud Firestore |
+| Storage | Firebase Storage |
+| Hosting | Firebase Hosting |
+| Analytics | Firebase Analytics |
+| Design System | "Guild Royale" — custom tokens, dark mode default |
+
+## Infrastructure
+
+Everything runs on **Firebase** (free tier):
+- **Hosting**: Firebase Hosting with global CDN
+- **Auth**: Firebase Auth (email/password + Google)
+- **Database**: Cloud Firestore
+- **Storage**: Firebase Storage
+- **Analytics**: Firebase Analytics
+
+**No Vercel. No Supabase. No AWS. One platform.**
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # localhost:3000
+npm run build   # static export to out/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+firebase deploy
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+├── app/
+│   ├── globals.css       # Guild Royale design system
+│   ├── layout.tsx        # Root layout + fonts
+│   └── page.tsx          # Landing page
+├── components/
+│   ├── ui/
+│   │   ├── button.tsx    # CVA button variants
+│   │   └── badge.tsx     # CVA badge variants
+│   ├── navbar.tsx        # Glass-morphism navbar
+│   ├── quest-card.tsx    # Quest listing card
+│   └── rank-badge.tsx    # Shield-shaped rank badge
+└── lib/
+    ├── constants.ts      # Ranks, categories, districts, XP
+    ├── firebase.ts       # Firebase client init
+    ├── firestore-schema.ts # Firestore document types
+    └── utils.ts          # cn() helper
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Links
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 🔗 Notion: [Muster.club Project](https://www.notion.so/Muster-club-Guild-Based-Career-Gig-Platform-3293aa1f486b8196a6f7f7772d8d2ed6)
+- 🎯 Status: Sprint 0 — MVP Build (Mar 21-31, 2026)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built in Singapore 🇸🇬
