@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USERS & AUTH
+// ==========================================
+
+enum UserRole {
+  ADVENTURER
+  QUEST_GIVER
+  ADMIN
+}
+
+enum Rank {
+  F
+  E
+  D
+  C
+  B
+  A
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  avatarUrl     String?
+  bio           String?
+  role          UserRole  @default(ADVENTURER)
+  rank          Rank      @default(F)
+  xp            Int       @default(0)
+  location      String?   // SG district
+  skills        String[]  // Array of skill tags
+  phone         String?
+  isVerified    Boolean   @default(false)
+  
+  // Quest-giver specific
+  companyName   String?
+  companyDesc   String?
+  
+  // Stats
+  questsCompleted  Int      @default(0)
+  averageRating    Float    @default(0)
+  totalEarnings    Float    @default(0)
+  
+  // Auth
+  supabaseId    String?   @unique
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  questsPosted     Quest[]        @relation("QuestGiver")
+  applications     Application[]
+  ratingsGiven     Rating[]       @relation("RatingGiver")
+  ratingsReceived  Rating[]       @relation("RatingReceiver")
+  
+  @@map("users")
+}
+
+// ==========================================
+// QUESTS
+// ==========================================
+
+enum QuestStatus {
+  DRAFT
+  PENDING_REVIEW  // Aggregated quests awaiting curation
+  ACTIVE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum QuestCategory {
+  EVENTS
+  FNB           // Food & Beverage
+  ADMIN
+  DELIVERY
+  CLEANING
+  MOVING
+  MARKETING
+  DESIGN
+  PHOTOGRAPHY
+  TUTORING
+  TECH_SUPPORT
+  OTHER
+}
+
+enum QuestSource {
+  DIRECT        // Posted on Muster.club
+  CAROUSELL
+  GUMTREE
+  FACEBOOK
+  INDEED
+  OTHER_AGGREGATED
+}
+
+model Quest {
+  id            String        @id @default(cuid())
+  title         String
+  description   String
+  category      QuestCategory
+  
+  // Location
+  location      String        // SG district/area
+  address       String?       // Full address (optional)
+  isRemote      Boolean       @default(false)
+  
+  // Pay & Time
+  payMin        Float?
+  payMax        Float?
+  payType       String        @default("fixed") // "fixed", "hourly", "daily"
+  currency      String        @default("SGD")
+  dateStart     DateTime?
+  dateEnd       DateTime?
+  duration      String?       // e.g. "3 hours", "1 day"
+  
+  // Requirements
+  rankRequired  Rank          @default(F)
+  slotsTotal    Int           @default(1)
+  slotsFilled   Int           @default(0)
+  skills        String[]
+  requirements  String?       // Additional requirements text
+  
+  // Source
+  source        QuestSource   @default(DIRECT)
+  sourceUrl     String?       // Original listing URL for aggregated quests
+  sourceId      String?       // ID on source platform
+  
+  // Media
+  imageUrls     String[]
+  
+  // Status
+  status        QuestStatus   @default(ACTIVE)
+  isFeatured    Boolean       @default(false)
+  
+  // Quest Giver
+  questGiverId  String
+  questGiver    User          @relation("QuestGiver", fields: [questGiverId], references: [id])
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  expiresAt     DateTime?
+  
+  // Relations
+  applications  Application[]
+  ratings       Rating[]
+  
+  @@index([category])
+  @@index([status])
+  @@index([rankRequired])
+  @@index([location])
+  @@index([createdAt])
+  @@map("quests")
+}
+
+// ==========================================
+// APPLICATIONS
+// ==========================================
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  COMPLETED
+}
+
+model Application {
+  id            String            @id @default(cuid())
+  message       String?           // Cover message
+  status        ApplicationStatus @default(PENDING)
+  
+  questId       String
+  quest         Quest             @relation(fields: [questId], references: [id])
+  
+  adventurerId  String
+  adventurer    User              @relation(fields: [adventurerId], references: [id])
+  
+  acceptedAt    DateTime?
+  completedAt   DateTime?
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  
+  @@unique([questId, adventurerId]) // One application per quest per user
+  @@index([questId])
+  @@index([adventurerId])
+  @@map("applications")
+}
+
+// ==========================================
+// RATINGS
+// ==========================================
+
+model Rating {
+  id            String    @id @default(cuid())
+  score         Int       // 1-5
+  comment       String?
+  skillTags     String[]  // Skills demonstrated
+  
+  questId       String
+  quest         Quest     @relation(fields: [questId], references: [id])
+  
+  giverId       String
+  giver         User      @relation("RatingGiver", fields: [giverId], references: [id])
+  
+  receiverId    String
+  receiver      User      @relation("RatingReceiver", fields: [receiverId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+  
+  @@unique([questId, giverId, receiverId]) // One rating per direction per quest
+  @@index([receiverId])
+  @@map("ratings")
+}
