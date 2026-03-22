@@ -2,6 +2,12 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
+
+function useHydrated() {
+  const [hydrated, setHydrated] = React.useState(false)
+  React.useEffect(() => setHydrated(true), [])
+  return hydrated
+}
 import { MapPin, Clock, Coins } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { RankBadge } from "@/components/rank-badge"
@@ -29,9 +35,10 @@ interface QuestCardProps {
 }
 
 export function QuestCard({ quest, className, index = 0 }: QuestCardProps) {
+  const hydrated = useHydrated()
   return (
     <motion.article
-      initial={{ opacity: 0, y: 24 }}
+      initial={hydrated ? { opacity: 0, y: 24 } : false}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.45, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
@@ -91,12 +98,11 @@ export function QuestCard({ quest, className, index = 0 }: QuestCardProps) {
         )}
       </div>
 
-      {/* Hover glow */}
+      {/* Hover border glow */}
       <div
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{
-          background:
-            "radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(99,102,241,0.04), transparent 40%)",
+          boxShadow: "inset 0 0 0 1px rgba(99,102,241,0.4)",
         }}
         aria-hidden="true"
       />

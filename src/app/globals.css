@@ -97,18 +97,6 @@
   --input-border: #2D2841;
 }
 
-/* Light mode */
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --background: #FAFAFE;
-    --foreground: #1A1726;
-    --card-bg: #FFFFFF;
-    --card-border: #E5E3F0;
-    --input-bg: #FFFFFF;
-    --input-border: #E5E3F0;
-  }
-}
 
 /* ==========================================
    BASE STYLES

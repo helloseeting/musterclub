@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-gradient-to-r from-guild-500 via-purple-500 to-gold-500 text-white shadow-guild hover:shadow-guild-lg hover:scale-[1.03] active:scale-[0.98]",
+          "bg-guild-500 text-white shadow-guild hover:bg-guild-600 hover:shadow-guild-lg hover:scale-[1.02] active:scale-[0.98]",
         secondary:
           "border border-guild-500/50 bg-guild-950/60 text-guild-300 hover:border-guild-400 hover:bg-guild-900/60 hover:text-white active:scale-[0.98]",
         ghost:

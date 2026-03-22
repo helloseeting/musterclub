@@ -6,14 +6,21 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
-  { label: "How It Works", href: "#how-it-works" },
+  { label: "Guild System", href: "#guild" },
   { label: "Quests", href: "#quests" },
-  { label: "Ranks", href: "#ranks" },
+  { label: "How It Works", href: "#how-it-works" },
 ]
+
+function useHydrated() {
+  const [hydrated, setHydrated] = React.useState(false)
+  React.useEffect(() => setHydrated(true), [])
+  return hydrated
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false)
   const [mobileOpen, setMobileOpen] = React.useState(false)
+  const hydrated = useHydrated()
   const { scrollY } = useScroll()
 
   useMotionValueEvent(scrollY, "change", (v) => {
@@ -22,7 +29,7 @@ export function Navbar() {
 
   return (
     <motion.header
-      initial={{ y: -16, opacity: 0 }}
+      initial={hydrated ? { y: -16, opacity: 0 } : false}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
       className={cn(
