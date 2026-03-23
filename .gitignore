@@ -5,6 +5,9 @@ node_modules/
 
 # Testing
 coverage/
+playwright-report/
+test-results/
+blob-report/
 
 # Next.js
 .next/
@@ -19,6 +22,11 @@ build/
 
 # Debug
 npm-debug.log*
+firebase-debug.log
+firestore-debug.log
+database-debug.log
+pubsub-debug.log
+ui-debug.log
 
 # Local env files
 .env

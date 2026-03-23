@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           firebaseUser.displayName ??
           firebaseUser.email?.split("@")[0] ??
           "Adventurer",
-        avatarUrl: firebaseUser.photoURL ?? undefined,
+        ...(firebaseUser.photoURL ? { avatarUrl: firebaseUser.photoURL } : {}),
         role: "adventurer" as const,
         rank: "F" as const,
         xp: 0,
@@ -97,7 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const newUserDoc = {
       email: cred.user.email ?? "",
       name,
-      avatarUrl: undefined,
       role: "adventurer" as const,
       rank: "F" as const,
       xp: 0,

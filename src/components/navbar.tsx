@@ -166,6 +166,7 @@ export function Navbar() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
+          data-testid="mobile-menu"
           className="md:hidden border-t border-border-dark bg-bg-dark/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-2"
         >
           {NAV_LINKS.map((link) => (
