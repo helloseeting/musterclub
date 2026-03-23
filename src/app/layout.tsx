@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Space_Grotesk, Inter } from "next/font/google"
+import { AuthProvider } from "@/lib/auth-context"
 import "./globals.css"
 
 const spaceGrotesk = Space_Grotesk({
@@ -60,7 +61,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg-dark text-text-primary-dark antialiased">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )
