@@ -35,14 +35,24 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: demo-api-key
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-musterclub.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-musterclub
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-musterclub.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+          NEXT_PUBLIC_FIREBASE_APP_ID: 1:000000000000:web:demo000000000000
+          NEXT_PUBLIC_USE_EMULATORS: "true"
+
       - name: Run E2E tests with Firebase emulators
         run: |
           firebase emulators:exec \
             --project demo-musterclub \
             --only auth,firestore \
-            "npx playwright test"
+            "npx serve out -l 3000 & sleep 3 && npx playwright test"
         env:
-          # Use demo- project so no real Firebase credentials are needed
           NEXT_PUBLIC_FIREBASE_API_KEY: demo-api-key
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-musterclub.firebaseapp.com
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-musterclub
