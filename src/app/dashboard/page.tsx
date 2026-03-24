@@ -624,13 +624,13 @@ function DashboardContent() {
       </div>
 
       {/* Tabs + list */}
-      <div className="max-w-4xl mx-auto px-4 pb-20">
-        <div className="flex gap-1 mb-6 bg-surface rounded-xl p-1 w-fit border border-white/6">
+      <div className="max-w-4xl mx-auto px-4 pb-safe-offset-20">
+        <div className="flex gap-1 mb-6 bg-surface rounded-xl p-1 w-full sm:w-fit border border-white/6">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className="relative px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
+              className="relative flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 min-h-[44px]"
               style={{ color: tab === t.key ? "white" : "#64748B" }}
             >
               {tab === t.key && (

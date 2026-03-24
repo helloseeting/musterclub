@@ -131,7 +131,7 @@ export function Navbar() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 rounded-lg text-text-secondary-dark hover:text-white hover:bg-surface-dark-hover transition-colors"
+          className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-secondary-dark hover:text-white hover:bg-surface-dark-hover transition-colors"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((o) => !o)}

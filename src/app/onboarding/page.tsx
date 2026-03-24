@@ -317,7 +317,7 @@ function LocationStep({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-[360px] overflow-y-auto pr-0.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-[40vh] sm:max-h-[360px] overflow-y-auto pr-0.5">
         {SG_DISTRICTS.map(district => {
           const selected = data.location === district
           const isIslandwide = district === "Island-wide"
@@ -910,7 +910,7 @@ export default function OnboardingPage() {
       <div
         className={cn(
           "relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6",
-          isReveal ? "pt-20 pb-12" : "py-6"
+          isReveal ? "pt-20 pb-safe-offset-8" : "py-6 pb-safe"
         )}
       >
         <div className={cn("w-full", isReveal ? "max-w-sm" : "max-w-lg")}>

@@ -19,8 +19,8 @@ const buttonVariants = cva(
           "bg-red-600 text-white hover:bg-red-500 active:scale-[0.98]",
       },
       size: {
-        sm: "h-8 px-4 text-sm",
-        md: "h-10 px-5 text-sm",
+        sm: "h-9 px-4 text-sm",
+        md: "h-11 px-5 text-sm",
         lg: "h-12 px-7 text-base",
         xl: "h-14 px-9 text-lg",
       },

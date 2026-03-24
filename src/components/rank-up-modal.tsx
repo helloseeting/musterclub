@@ -150,7 +150,7 @@ export function RankUpModal({ open, oldRank, newRank, newXP, onDismiss }: RankUp
               }}
             />
 
-            <div className="px-8 py-10 flex flex-col items-center text-center gap-6">
+            <div className="px-5 py-8 sm:px-8 sm:py-10 flex flex-col items-center text-center gap-5 sm:gap-6">
               {/* Rank title */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -170,7 +170,7 @@ export function RankUpModal({ open, oldRank, newRank, newXP, onDismiss }: RankUp
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 15 }}
-                className="flex items-center gap-5"
+                className="flex items-center gap-3 sm:gap-5"
               >
                 {/* Old rank — shrinking/fading */}
                 <motion.div

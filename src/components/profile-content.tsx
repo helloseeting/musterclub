@@ -89,7 +89,7 @@ function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-[#0F0D15]">
       <Navbar />
-      <main className="max-w-2xl mx-auto px-4 pt-24 pb-20 space-y-4">
+      <main className="max-w-2xl mx-auto px-4 pt-24 pb-safe-offset-20 space-y-4">
         <div className="rounded-2xl bg-[#1A1726] border border-[#2D2841] overflow-hidden">
           <div className="h-24 bg-[#231F33] animate-pulse" />
           <div className="px-5 pb-5 -mt-10 space-y-3">
@@ -257,7 +257,7 @@ export function ProfileContent({ userId }: { userId: string }) {
   return (
     <div className="min-h-screen bg-[#0F0D15]">
       <Navbar />
-      <main className="max-w-2xl mx-auto px-4 pt-24 pb-20 space-y-4">
+      <main className="max-w-2xl mx-auto px-4 pt-24 pb-safe-offset-20 space-y-4">
 
         {/* Hero card */}
         <motion.div {...fadeUp} className="relative overflow-hidden rounded-2xl border border-[#2D2841] bg-[#1A1726]">
@@ -285,14 +285,14 @@ export function ProfileContent({ userId }: { userId: string }) {
                 </div>
               </div>
               {isOwnProfile && (
-                <div className="flex items-center gap-2 pb-1">
+                <div className="flex items-center gap-2 pb-1 shrink-0">
                   {isEditing ? (
                     <>
-                      <Button onClick={() => setIsEditing(false)} disabled={saving}><X size={13} weight="bold" /> Cancel</Button>
-                      <Button onClick={saveProfile} disabled={saving}><Check size={13} weight="bold" /> {saving ? "Saving…" : "Save"}</Button>
+                      <Button size="sm" onClick={() => setIsEditing(false)} disabled={saving}><X size={13} weight="bold" /> Cancel</Button>
+                      <Button size="sm" onClick={saveProfile} disabled={saving}><Check size={13} weight="bold" /> {saving ? "Saving…" : "Save"}</Button>
                     </>
                   ) : (
-                    <Button onClick={startEditing}><PencilSimple size={13} weight="bold" /> Edit Profile</Button>
+                    <Button size="sm" onClick={startEditing}><PencilSimple size={13} weight="bold" /> Edit Profile</Button>
                   )}
                 </div>
               )}

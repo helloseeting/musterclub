@@ -584,7 +584,7 @@ function CtaSection() {
 function Footer() {
   return (
     <footer
-      className="relative border-t border-border-dark px-6 py-8"
+      className="relative border-t border-border-dark px-6 py-8 pb-safe-offset-8"
       role="contentinfo"
     >
       <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4">

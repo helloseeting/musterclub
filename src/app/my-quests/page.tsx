@@ -531,7 +531,7 @@ function MyQuestsBoard() {
               background: "linear-gradient(to bottom, rgba(99,102,241,0.06) 0%, transparent 100%)",
             }}
           />
-          <div className="relative z-10 mx-auto max-w-3xl px-6 py-8">
+          <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-8">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-4 h-0.5 rounded-full bg-guild-500" aria-hidden="true" />
               <span className="text-xs font-heading font-semibold text-guild-400 uppercase tracking-widest">
@@ -544,7 +544,7 @@ function MyQuestsBoard() {
           </div>
         </section>
 
-        <div className="mx-auto max-w-3xl px-6 py-6 space-y-6">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-6 pb-safe-offset-20">
           {/* XP progress card */}
           <XPProgressBar />
 

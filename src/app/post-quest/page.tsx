@@ -250,7 +250,7 @@ function CategoryGrid({
   onChange: (cat: QuestCategory) => void
 }) {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
       {Object.entries(QUEST_CATEGORIES).map(([key, cat]) => {
         const catValue = key.toLowerCase() as QuestCategory
         const selected = value === catValue
@@ -518,7 +518,7 @@ function PostQuestForm() {
                 "linear-gradient(to bottom, rgba(99,102,241,0.06) 0%, transparent 100%)",
             }}
           />
-          <div className="relative z-10 mx-auto max-w-3xl px-6 py-8">
+          <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-8">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -542,7 +542,7 @@ function PostQuestForm() {
         </section>
 
         {/* Form body */}
-        <div className="mx-auto max-w-3xl px-6 py-8">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 pb-safe-offset-8">
           <AnimatePresence mode="wait">
             {step === 1 ? (
               <motion.div
@@ -1001,7 +1001,7 @@ function PostQuestForm() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between gap-4 pt-2">
+                <div className="flex items-center justify-between gap-3 pt-2">
                   <Button
                     type="button"
                     variant="ghost"

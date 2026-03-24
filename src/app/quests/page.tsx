@@ -78,7 +78,7 @@ interface FilterSelectProps {
 
 function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 flex-shrink-0">
       <label className="text-xs font-heading font-semibold text-text-muted-dark uppercase tracking-wider sr-only">
         {label}
       </label>
@@ -86,7 +86,7 @@ function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className="h-9 px-3 rounded-lg bg-surface-dark border border-border-dark text-sm text-text-secondary-dark hover:border-guild-500/30 focus:outline-none focus:ring-2 focus:ring-guild-500 focus:border-guild-500/50 transition-all duration-200 cursor-pointer appearance-none pr-8"
+        className="h-11 px-3 rounded-lg bg-surface-dark border border-border-dark text-sm text-text-secondary-dark hover:border-guild-500/30 focus:outline-none focus:ring-2 focus:ring-guild-500 focus:border-guild-500/50 transition-all duration-200 cursor-pointer appearance-none pr-8"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6784' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
           backgroundRepeat: "no-repeat",
@@ -258,13 +258,18 @@ function QuestModal({ quest, onClose, onRankUp }: QuestModalProps) {
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
 
         <Dialog.Content
-          className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-lg mx-auto max-h-[85vh] overflow-y-auto rounded-2xl border border-border-dark bg-bg-dark-secondary shadow-guild-lg focus:outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          className="fixed inset-x-0 bottom-0 sm:inset-x-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 z-50 sm:max-w-lg sm:mx-auto max-h-[92vh] sm:max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border-dark bg-bg-dark-secondary shadow-guild-lg focus:outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom sm:data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-bottom sm:data-[state=closed]:zoom-out-95"
           aria-describedby="quest-description"
         >
+          {/* Mobile drag handle */}
+          <div className="flex justify-center pt-3 pb-1 sm:hidden" aria-hidden="true">
+            <div className="w-10 h-1 rounded-full bg-border-dark" />
+          </div>
+
           {/* Close */}
           <Dialog.Close asChild>
             <button
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-text-muted-dark hover:text-white hover:bg-surface-dark-hover transition-colors z-10"
+              className="absolute top-4 right-4 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-muted-dark hover:text-white hover:bg-surface-dark-hover transition-colors z-10"
               aria-label="Close"
             >
               <X weight="bold" size={16} />
@@ -796,10 +801,10 @@ function QuestBoard() {
 
         {/* Filters */}
         <section className="sticky top-[65px] z-40 border-b border-border-dark bg-bg-dark/90 backdrop-blur-xl">
-          <div className="mx-auto max-w-7xl px-6 py-3">
-            <div className="flex flex-wrap gap-2 items-center">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3">
+            <div className="flex gap-2 items-center overflow-x-auto pb-1 scrollbar-none snap-x">
               {/* Search */}
-              <div className="relative flex-1 min-w-[160px] max-w-xs">
+              <div className="relative flex-shrink-0 w-40 sm:flex-1 sm:min-w-[160px] sm:max-w-xs">
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-dark pointer-events-none"
                   width="14"
@@ -817,7 +822,7 @@ function QuestBoard() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search quests…"
                   aria-label="Search quests"
-                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-surface-dark border border-border-dark text-sm text-text-secondary-dark placeholder:text-text-muted-dark hover:border-guild-500/30 focus:outline-none focus:ring-2 focus:ring-guild-500 focus:border-guild-500/50 transition-all duration-200"
+                  className="w-full h-11 pl-8 pr-3 rounded-lg bg-surface-dark border border-border-dark text-sm text-text-secondary-dark placeholder:text-text-muted-dark hover:border-guild-500/30 focus:outline-none focus:ring-2 focus:ring-guild-500 focus:border-guild-500/50 transition-all duration-200"
                 />
               </div>
 
@@ -865,7 +870,7 @@ function QuestBoard() {
         </section>
 
         {/* Quest grid */}
-        <section className="mx-auto max-w-7xl px-6 py-8">
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-8 pb-safe-offset-20">
           {questsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
