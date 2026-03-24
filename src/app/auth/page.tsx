@@ -264,18 +264,18 @@ function SignUpForm({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AuthPage() {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { user, userDoc, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
   const hydrated = useHydrated()
   const [googleLoading, setGoogleLoading] = React.useState(false)
   const [googleError, setGoogleError] = React.useState("")
 
-  // Redirect if already logged in
+  // Redirect based on onboarding status
   React.useEffect(() => {
-    if (!loading && user) {
-      router.replace("/quests")
+    if (!loading && user && userDoc) {
+      router.replace(userDoc.isOnboarded ? "/quests" : "/onboarding")
     }
-  }, [loading, user, router])
+  }, [loading, user, userDoc, router])
 
   if (loading || user) {
     return (
@@ -300,7 +300,7 @@ export default function AuthPage() {
     setGoogleLoading(true)
     try {
       await signInWithGoogle()
-      router.replace("/quests")
+      // Redirect handled by useEffect once userDoc is loaded
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? ""
       if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
@@ -440,11 +440,11 @@ export default function AuthPage() {
             </Tabs.List>
 
             <Tabs.Content value="signin" className="outline-none">
-              <SignInForm onSuccess={() => router.replace("/quests")} />
+              <SignInForm onSuccess={() => { /* redirect handled by useEffect */ }} />
             </Tabs.Content>
 
             <Tabs.Content value="signup" className="outline-none">
-              <SignUpForm onSuccess={() => router.replace("/quests")} />
+              <SignUpForm onSuccess={() => { /* redirect handled by useEffect */ }} />
             </Tabs.Content>
           </Tabs.Root>
         </motion.div>

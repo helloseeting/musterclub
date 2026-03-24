@@ -22,6 +22,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
+  refreshUserDoc: () => Promise<void>
 }
 
 const AuthContext = React.createContext<AuthContextType | null>(null)
@@ -119,6 +120,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // onAuthStateChanged fires with null, resetting user + userDoc
   }
 
+  const refreshUserDoc = async () => {
+    if (!auth.currentUser) return
+    const userRef = doc(db, "users", auth.currentUser.uid)
+    const snap = await getDoc(userRef)
+    if (snap.exists()) {
+      setUserDoc(snap.data() as UserDoc)
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -129,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithEmail,
         signUpWithEmail,
         signOut,
+        refreshUserDoc,
       }}
     >
       {children}

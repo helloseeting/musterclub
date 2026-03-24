@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { collection, query, where, onSnapshot } from "firebase/firestore"
 import * as Dialog from "@radix-ui/react-dialog"
-import { MapPin, Clock, Coins, X, Users, Briefcase } from "@phosphor-icons/react"
+import { MapPin, Clock, Coins, X, Users, Briefcase, Star, CheckCircle, Hourglass, XCircle } from "@phosphor-icons/react"
 import { db } from "@/lib/firebase"
 import { AuthGuard } from "@/components/auth-guard"
 import { Navbar } from "@/components/navbar"
@@ -12,10 +12,13 @@ import { QuestCard, type QuestCardData } from "@/components/quest-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { RankBadge } from "@/components/rank-badge"
+import { RankUpModal } from "@/components/rank-up-modal"
 import { useAuth } from "@/lib/auth-context"
 import { seedQuestsIfEmpty } from "@/lib/seed-quests"
+import { applyToQuest, getUserApplication, rateUser, awardXP } from "@/lib/quest-actions"
+import { calculateXP } from "@/lib/rank-utils"
 import { QUEST_CATEGORIES, SG_DISTRICTS, RANKS } from "@/lib/constants"
-import type { QuestDoc } from "@/lib/firestore-schema"
+import type { QuestDoc, ApplicationDoc } from "@/lib/firestore-schema"
 import type { RankKey } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
@@ -100,18 +103,145 @@ function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
   )
 }
 
+// ─── Star rating input ────────────────────────────────────────────────────────
+interface StarRatingProps {
+  value: number
+  onChange: (v: number) => void
+}
+
+function StarRating({ value, onChange }: StarRatingProps) {
+  const [hovered, setHovered] = React.useState(0)
+
+  return (
+    <div className="flex gap-1" role="radiogroup" aria-label="Rating">
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= (hovered || value)
+        return (
+          <motion.button
+            key={star}
+            type="button"
+            role="radio"
+            aria-checked={value === star}
+            aria-label={`${star} star${star !== 1 ? "s" : ""}`}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            onClick={() => onChange(star)}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-guild-500 rounded"
+          >
+            <Star
+              weight={filled ? "fill" : "regular"}
+              size={28}
+              className={cn(
+                "transition-colors duration-100",
+                filled ? "text-gold-400" : "text-text-muted-dark"
+              )}
+            />
+          </motion.button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Application status pill ──────────────────────────────────────────────────
+function AppStatusPill({ status }: { status: ApplicationDoc["status"] }) {
+  const config = {
+    pending: { icon: Hourglass, label: "Pending review", className: "text-yellow-400 bg-yellow-400/10 border-yellow-400/30" },
+    accepted: { icon: CheckCircle, label: "Accepted!", className: "text-emerald-400 bg-emerald-400/10 border-emerald-400/30" },
+    rejected: { icon: XCircle, label: "Not selected", className: "text-red-400 bg-red-400/10 border-red-400/30" },
+    withdrawn: { icon: XCircle, label: "Withdrawn", className: "text-text-muted-dark bg-surface-dark border-border-dark" },
+    completed: { icon: CheckCircle, label: "Completed", className: "text-guild-400 bg-guild-500/10 border-guild-500/30" },
+  }
+  const c = config[status] ?? config.pending
+  const Icon = c.icon
+  return (
+    <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-heading font-semibold border", c.className)}>
+      <Icon weight="fill" size={12} />
+      {c.label}
+    </div>
+  )
+}
+
 // ─── Quest detail modal ───────────────────────────────────────────────────────
 interface QuestModalProps {
   quest: QuestWithId | null
   onClose: () => void
+  onRankUp: (oldRank: RankKey, newRank: RankKey, newXP: number) => void
 }
 
-function QuestModal({ quest, onClose }: QuestModalProps) {
-  const [toastVisible, setToastVisible] = React.useState(false)
+function QuestModal({ quest, onClose, onRankUp }: QuestModalProps) {
+  const { user, userDoc } = useAuth()
 
-  const handleApply = () => {
-    setToastVisible(true)
-    setTimeout(() => setToastVisible(false), 2800)
+  // Application state
+  const [application, setApplication] = React.useState<(ApplicationDoc & { id: string }) | null>(null)
+  const [appLoading, setAppLoading] = React.useState(false)
+
+  // Apply flow
+  const [applyOpen, setApplyOpen] = React.useState(false)
+  const [message, setMessage] = React.useState("")
+  const [applying, setApplying] = React.useState(false)
+  const [applyError, setApplyError] = React.useState("")
+
+  // Rating flow
+  const [ratingOpen, setRatingOpen] = React.useState(false)
+  const [ratingScore, setRatingScore] = React.useState(0)
+  const [ratingComment, setRatingComment] = React.useState("")
+  const [ratingSkills, setRatingSkills] = React.useState<string[]>([])
+  const [submittingRating, setSubmittingRating] = React.useState(false)
+  const [ratingSubmitted, setRatingSubmitted] = React.useState(false)
+
+  // Fetch existing application when modal opens
+  React.useEffect(() => {
+    if (!quest || !user) return
+    setApplication(null)
+    setApplyOpen(false)
+    setRatingOpen(false)
+    setRatingSubmitted(false)
+    setAppLoading(true)
+    getUserApplication(quest.id, user.uid)
+      .then(setApplication)
+      .catch(console.error)
+      .finally(() => setAppLoading(false))
+  }, [quest?.id, user?.uid])
+
+  const handleApply = async () => {
+    if (!quest || !user) return
+    setApplying(true)
+    setApplyError("")
+    try {
+      await applyToQuest(quest.id, user.uid, message.trim() || undefined)
+      const app = await getUserApplication(quest.id, user.uid)
+      setApplication(app)
+      setApplyOpen(false)
+      setMessage("")
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  const handleSubmitRating = async () => {
+    if (!quest || !user || ratingScore === 0) return
+    setSubmittingRating(true)
+    try {
+      // Rate the quest giver
+      await rateUser(quest.id, user.uid, quest.questGiverId, ratingScore, ratingComment, ratingSkills)
+      // Award XP
+      const isFirst = (userDoc?.questsCompleted ?? 0) === 0
+      const xpAmount = calculateXP(true, ratingScore, isFirst, 0)
+      const result = await awardXP(user.uid, xpAmount)
+      setRatingSubmitted(true)
+      if (result.rankedUp && result.newRank && userDoc?.rank) {
+        onRankUp(userDoc.rank, result.newRank, result.newXP)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSubmittingRating(false)
+    }
   }
 
   if (!quest) return null
@@ -120,14 +250,13 @@ function QuestModal({ quest, onClose }: QuestModalProps) {
   const cat = QUEST_CATEGORIES[catKey] ?? QUEST_CATEGORIES.OTHER
   const rankData = RANKS[quest.rankRequired as RankKey] ?? RANKS.F
   const slotsLeft = Math.max(0, quest.slotsTotal - quest.slotsFilled)
+  const canApply = !application && !appLoading && quest.status === "active" && slotsLeft > 0
 
   return (
     <Dialog.Root open={!!quest} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        {/* Overlay */}
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
 
-        {/* Panel */}
         <Dialog.Content
           className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-lg mx-auto max-h-[85vh] overflow-y-auto rounded-2xl border border-border-dark bg-bg-dark-secondary shadow-guild-lg focus:outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
           aria-describedby="quest-description"
@@ -176,6 +305,9 @@ function QuestModal({ quest, onClose }: QuestModalProps) {
                   ★ {quest.questGiverRating.toFixed(1)}
                 </span>
               )}
+              <span className="ml-2 text-text-muted-dark">
+                · {quest.applicationCount} applied
+              </span>
             </p>
 
             {/* Meta grid */}
@@ -276,30 +408,180 @@ function QuestModal({ quest, onClose }: QuestModalProps) {
               </div>
             </div>
 
-            {/* Apply button */}
-            <div className="relative">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={handleApply}
-              >
-                <Briefcase weight="bold" size={16} />
-                Apply Now
-              </Button>
-
-              {/* Coming soon toast */}
-              {toastVisible && (
+            {/* ── Application / Rating zone ── */}
+            <AnimatePresence mode="wait">
+              {appLoading ? (
                 <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 4 }}
-                  className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-2 rounded-full bg-bg-dark-tertiary border border-border-dark text-sm text-text-secondary-dark shadow-guild"
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-12 rounded-xl bg-surface-dark animate-pulse"
+                />
+              ) : application ? (
+                <motion.div
+                  key="app-status"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
                 >
-                  Applications coming soon!
+                  {/* Current application status */}
+                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface-dark border border-border-dark">
+                    <span className="text-xs text-text-muted-dark font-heading font-semibold uppercase tracking-wider">
+                      Your application
+                    </span>
+                    <AppStatusPill status={application.status} />
+                  </div>
+
+                  {/* Rate quest giver after completion */}
+                  {application.status === "completed" && !ratingSubmitted && (
+                    <div className="rounded-xl border border-guild-500/30 bg-guild-500/5 p-4">
+                      {!ratingOpen ? (
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-heading font-semibold text-white">
+                            Rate your quest giver
+                          </p>
+                          <Button size="sm" variant="secondary" onClick={() => setRatingOpen(true)}>
+                            Leave a review
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-sm font-heading font-semibold text-white">
+                            Rate {quest.questGiverName}
+                          </p>
+                          <StarRating value={ratingScore} onChange={setRatingScore} />
+                          <textarea
+                            value={ratingComment}
+                            onChange={(e) => setRatingComment(e.target.value)}
+                            placeholder="Share your experience (optional)…"
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg bg-bg-dark border border-border-dark text-sm text-text-secondary-dark placeholder:text-text-muted-dark resize-none focus:outline-none focus:ring-2 focus:ring-guild-500 focus:border-guild-500/50"
+                          />
+                          {quest.skills.length > 0 && (
+                            <div>
+                              <p className="text-xs text-text-muted-dark mb-2">Tag skills demonstrated:</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {quest.skills.map((skill) => {
+                                  const active = ratingSkills.includes(skill)
+                                  return (
+                                    <button
+                                      key={skill}
+                                      type="button"
+                                      onClick={() =>
+                                        setRatingSkills((prev) =>
+                                          active ? prev.filter((s) => s !== skill) : [...prev, skill]
+                                        )
+                                      }
+                                      className={cn(
+                                        "px-2.5 py-1 rounded-full text-xs font-heading font-semibold border transition-colors",
+                                        active
+                                          ? "bg-guild-500/20 border-guild-500/50 text-guild-300"
+                                          : "bg-surface-dark border-border-dark text-text-muted-dark hover:border-guild-500/30"
+                                      )}
+                                    >
+                                      {skill.replace(/_/g, " ")}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          <Button
+                            variant="primary"
+                            size="md"
+                            className="w-full"
+                            disabled={ratingScore === 0 || submittingRating}
+                            onClick={handleSubmitRating}
+                          >
+                            {submittingRating ? "Submitting…" : "Submit Review"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {ratingSubmitted && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-sm text-emerald-400 font-heading font-semibold"
+                    >
+                      <CheckCircle weight="fill" size={16} />
+                      Review submitted — XP awarded!
+                    </motion.div>
+                  )}
+                </motion.div>
+              ) : applyOpen ? (
+                <motion.div
+                  key="apply-form"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-3"
+                >
+                  <p className="text-sm font-heading font-semibold text-white">
+                    Apply to this quest
+                  </p>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Introduce yourself to the quest giver… (optional)"
+                    rows={3}
+                    className="w-full px-3 py-2.5 rounded-xl bg-surface-dark border border-border-dark text-sm text-text-secondary-dark placeholder:text-text-muted-dark resize-none focus:outline-none focus:ring-2 focus:ring-guild-500 focus:border-guild-500/50 transition-all"
+                  />
+                  {applyError && (
+                    <p className="text-xs text-red-400">{applyError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="md"
+                      className="flex-1"
+                      onClick={() => { setApplyOpen(false); setApplyError("") }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className="flex-1"
+                      disabled={applying}
+                      onClick={handleApply}
+                    >
+                      {applying ? "Sending…" : "Confirm Apply"}
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : canApply ? (
+                <motion.div
+                  key="apply-btn"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => setApplyOpen(true)}
+                  >
+                    <Briefcase weight="bold" size={16} />
+                    Apply Now
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="no-slots"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-3 text-center text-sm text-text-muted-dark"
+                >
+                  {slotsLeft === 0 ? "All slots filled" : "Applications closed"}
                 </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
@@ -365,6 +647,17 @@ function QuestBoard() {
   const [quests, setQuests] = React.useState<QuestWithId[]>([])
   const [questsLoading, setQuestsLoading] = React.useState(true)
   const [selectedQuest, setSelectedQuest] = React.useState<QuestWithId | null>(null)
+
+  // Rank-up modal state
+  const [rankUpData, setRankUpData] = React.useState<{
+    oldRank: RankKey
+    newRank: RankKey
+    newXP: number
+  } | null>(null)
+
+  const handleRankUp = (oldRank: RankKey, newRank: RankKey, newXP: number) => {
+    setRankUpData({ oldRank, newRank, newXP })
+  }
 
   // Filter state
   const [category, setCategory] = React.useState("all")
@@ -610,7 +903,19 @@ function QuestBoard() {
       <QuestModal
         quest={selectedQuest}
         onClose={() => setSelectedQuest(null)}
+        onRankUp={handleRankUp}
       />
+
+      {/* Rank-up celebration */}
+      {rankUpData && (
+        <RankUpModal
+          open={!!rankUpData}
+          oldRank={rankUpData.oldRank}
+          newRank={rankUpData.newRank}
+          newXP={rankUpData.newXP}
+          onDismiss={() => setRankUpData(null)}
+        />
+      )}
     </>
   )
 }
